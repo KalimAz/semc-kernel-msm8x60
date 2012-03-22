@@ -64,6 +64,8 @@
 
 #define __exception	__attribute__((section(".exception.text")))
 
+void cpu_idle_wait(void);
+
 struct thread_info;
 struct task_struct;
 
@@ -125,7 +127,7 @@ extern unsigned int user_debug;
 #define dsb() __asm__ __volatile__ ("mcr p15, 0, %0, c7, c10, 4" \
 				    : : "r" (0) : "memory")
 #define dmb() __asm__ __volatile__ ("mcr p15, 0, %0, c7, c10, 5" \
-				    : : "r" (0) : "memory")
+				: : "r" (0) : "memory")
 #elif defined(CONFIG_CPU_FA526)
 #define isb() __asm__ __volatile__ ("mcr p15, 0, %0, c7, c5, 4" \
 				    : : "r" (0) : "memory")
@@ -324,6 +326,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
 
 extern void disable_hlt(void);
 extern void enable_hlt(void);
+
+void cpu_idle_wait(void);
 
 #include <asm-generic/cmpxchg-local.h>
 

@@ -5,6 +5,7 @@
  *  protocol extension to H4.
  *
  *  Copyright (C) 2007 Texas Instruments, Inc.
+ *  Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
  *
  *  Written by Ohad Ben-Cohen <ohad@bencohen.org>
  *
@@ -45,6 +46,7 @@
 #include <linux/signal.h>
 #include <linux/ioctl.h>
 #include <linux/skbuff.h>
+#include <linux/serial_core.h>
 
 #include <net/bluetooth/bluetooth.h>
 #include <net/bluetooth/hci_core.h>
@@ -74,7 +76,7 @@ enum hcill_states_e {
 
 struct hcill_cmd {
 	u8 cmd;
-} __attribute__((packed));
+} __packed;
 
 struct ll_struct {
 	unsigned long rx_state;
@@ -85,6 +87,30 @@ struct ll_struct {
 	unsigned long hcill_state;	/* HCILL power state	*/
 	struct sk_buff_head tx_wait_q;	/* HCILL wait queue	*/
 };
+
+#ifdef CONFIG_SERIAL_MSM_HS
+void msm_hs_request_clock_off(struct uart_port *uport);
+void msm_hs_request_clock_on(struct uart_port *uport);
+
+static void __ll_msm_serial_clock_on(struct tty_struct *tty) {
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port = state->uart_port;
+
+	msm_hs_request_clock_on(port);
+}
+
+static void __ll_msm_serial_clock_request_off(struct tty_struct *tty) {
+	struct uart_state *state = tty->driver_data;
+	struct uart_port *port = state->uart_port;
+
+	msm_hs_request_clock_off(port);
+}
+#else
+static inline void __ll_msm_serial_clock_on(struct tty_struct *tty) {}
+static inline void __ll_msm_serial_clock_request_off(struct tty_struct *tty) {}
+#endif
+
+static int ll_enqueue(struct hci_uart *hu, struct sk_buff *skb);
 
 /*
  * Builds and sends an HCILL command packet.
@@ -118,6 +144,37 @@ out:
 	return err;
 }
 
+static const u8 enable_deep_sleep_command[] = {
+	[0] = 0x0C, [1] = 0xFD,	/* HCI_VS_SLEEP_MODE_CONFIGURATION */
+	[2] = 0x09,			/* Parameters length */
+	[3] = 0x01,			/* Big sleep enable */
+	[4] = 0x01,			/* Deep sleep enable */
+	[5] = 0x00,			/* Deep sleep mode */
+	[6] = 0xFF,			/* Output I/O select */
+	[7] = 0xFF,			/* Output pull enable */
+	[8] = 0xFF,			/* Input pull enable */
+	[9] = 0xFF,			/* Input I/O select */
+	[10] = 0x64, [11] = 0x00	/* Reserved */
+};
+
+static int ll_enable_deep_sleep(struct hci_uart *hu)
+{
+	struct sk_buff *skb = NULL;
+
+	skb = bt_skb_alloc(HCI_MAX_FRAME_SIZE, GFP_ATOMIC);
+	if (!skb) {
+		BT_ERR("Can't allocate mem for the deep sleep command packet");
+		return -ENOMEM;
+	}
+
+	skb->dev = (void *)hu->hdev;
+	bt_cb(skb)->pkt_type = HCI_COMMAND_PKT;
+	memcpy(skb_put(skb, sizeof(enable_deep_sleep_command)), \
+		enable_deep_sleep_command, sizeof(enable_deep_sleep_command));
+
+	return ll_enqueue(hu, skb);
+}
+
 /* Initialize protocol */
 static int ll_open(struct hci_uart *hu)
 {
@@ -137,7 +194,7 @@ static int ll_open(struct hci_uart *hu)
 
 	hu->priv = ll;
 
-	return 0;
+	return ll_enable_deep_sleep(hu);
 }
 
 /* Flush protocol data */
@@ -217,6 +274,10 @@ static void ll_device_want_to_wakeup(struct hci_uart *hu)
 		BT_DBG("dual wake-up-indication");
 		/* deliberate fall-through - do not add break */
 	case HCILL_ASLEEP:
+		/* Make sure clock is on - we may have turned clock off since
+		 * receiving the wake up indicator
+		 */
+		__ll_msm_serial_clock_on(hu->tty);
 		/* acknowledge device wake up */
 		if (send_hcill_cmd(HCILL_WAKE_UP_ACK, hu) < 0) {
 			BT_ERR("cannot acknowledge device wake up");
@@ -247,6 +308,7 @@ static void ll_device_want_to_sleep(struct hci_uart *hu)
 	unsigned long flags;
 	struct ll_struct *ll = hu->priv;
 
+
 	BT_DBG("hu %p", hu);
 
 	/* lock hcill state */
@@ -270,6 +332,11 @@ out:
 
 	/* actually send the sleep ack packet */
 	hci_uart_tx_wakeup(hu);
+
+	spin_lock_irqsave(&ll->hcill_lock, flags);
+	if (ll->hcill_state == HCILL_ASLEEP)
+		__ll_msm_serial_clock_request_off(hu->tty);
+	spin_unlock_irqrestore(&ll->hcill_lock, flags);
 }
 
 /*
@@ -321,6 +388,7 @@ static int ll_enqueue(struct hci_uart *hu, struct sk_buff *skb)
 		break;
 	case HCILL_ASLEEP:
 		BT_DBG("device asleep, waking up and queueing packet");
+		__ll_msm_serial_clock_on(hu->tty);
 		/* save packet for later */
 		skb_queue_tail(&ll->tx_wait_q, skb);
 		/* awake device */
@@ -383,6 +451,7 @@ static int ll_recv(struct hci_uart *hu, void *data, int count)
 	BT_DBG("hu %p count %d rx_state %ld rx_count %ld", hu, count, ll->rx_state, ll->rx_count);
 
 	ptr = data;
+
 	while (count) {
 		if (ll->rx_count) {
 			len = min_t(unsigned int, ll->rx_count, count);
@@ -517,7 +586,7 @@ static struct hci_uart_proto llp = {
 	.flush		= ll_flush,
 };
 
-int ll_init(void)
+int __init ll_init(void)
 {
 	int err = hci_uart_register_proto(&llp);
 
@@ -529,7 +598,7 @@ int ll_init(void)
 	return err;
 }
 
-int ll_deinit(void)
+int __exit ll_deinit(void)
 {
 	return hci_uart_unregister_proto(&llp);
 }

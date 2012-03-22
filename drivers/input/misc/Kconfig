@@ -183,6 +183,17 @@ config INPUT_ATI_REMOTE2
 	  To compile this driver as a module, choose M here: the module will be
 	  called ati_remote2.
 
+config INPUT_KEYCHORD
+	tristate "Key chord input driver support"
+	help
+	  Say Y here if you want to enable the key chord driver
+	  accessible at /dev/keychord.  This driver can be used
+	  for receiving notifications when client specified key
+	  combinations are pressed.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called keychord.
+
 config INPUT_KEYSPAN_REMOTE
 	tristate "Keyspan DMR USB remote control (EXPERIMENTAL)"
 	depends on EXPERIMENTAL
@@ -302,6 +313,23 @@ config INPUT_WINBOND_CIR
 	  To compile this driver as a module, choose M here: the module will be
 	  called winbond_cir.
 
+config INPUT_GPIO
+	tristate "GPIO driver support"
+	help
+	  Say Y here if you want to support gpio based keys, wheels etc...
+
+config INPUT_ISA1200_FF_MEMLESS
+	tristate "ISA1200 haptic ff-memless support"
+	depends on I2C
+	select INPUT_FF_MEMLESS
+	help
+	  ISA1200 is a high performance enhanced haptic chip.
+	  Say Y here if you want to support ISA1200 connected via I2C,
+	  and select N if you are unsure.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called isa1200-ff-memless.
+
 config HP_SDC_RTC
 	tristate "HP SDC Real Time Clock"
 	depends on (GSC || HP300) && SERIO
@@ -326,6 +354,28 @@ config INPUT_PCF8574
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called pcf8574_keypad.
+
+config INPUT_PWM_BEEPER
+	tristate "PWM beeper support"
+	depends on HAVE_PWM
+	help
+	  Say Y here to get support for PWM based beeper devices.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the module will be
+	  called pwm-beeper.
+
+config INPUT_PMIC8XXX_PWRKEY
+	tristate "PMIC8XXX power key support"
+	depends on MFD_PM8XXX
+	help
+	  Say Y here if you want support for the PMIC8XXX power key.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called pmic8xxx-pwrkey.
 
 config INPUT_GPIO_ROTARY_ENCODER
 	tristate "Rotary encoders connected to GPIO pins"
@@ -389,5 +439,177 @@ config INPUT_PCAP
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called pcap_keys.
+
+config PMIC8058_PWRKEY
+        tristate "PMIC8058 power key support"
+        default n
+        depends on PMIC8058
+        help
+          Say Y here if you want support for the PMIC8058 power key.
+
+          To compile this driver as a module, choose M here: the
+          module will be called pmic8058-pwrkey.
+
+config PMIC8058_FORCECRASH
+	boolean "PMIC8058 power key forcecrash support"
+	default n
+	depends on PMIC8058_PWRKEY && ARCH_MSM8X60
+	help
+	  Say Y here if you want support forcecrash functionality through
+	  PMIC8058 power key. Triggers panic if power key is hold for more
+	  than 10secs.
+
+config PMIC8058_OTHC
+        tristate "Qualcomm PMIC8058 OTHC support"
+        default n
+        depends on PMIC8058
+        help
+          Say Y here if you want support PMIC8058 OTHC.
+
+          To compile this driver as a module, choose M here: the
+          module will be called pmic8058-othc.
+
+config INPUT_PMIC8058_VIBRA_MEMLESS
+	tristate "Qualcomm PM8058 vibrator support (ff-memless)"
+	depends on PMIC8058 && INPUT_FF_MEMLESS
+	default n
+	help
+	  This option enables device driver support for the vibrator
+	  on Qualcomm PM8058 chip. This driver supports ff-memless interface
+	  from input framework.
+
+	  To compile this driver as module, choose M here: the
+	  module will be called pmic8058-vib-memless.
+
+config INPUT_APDS9702
+	tristate "APDS9702 proximity driver"
+	depends on I2C
+	default n
+	help
+	 If you say yes here you get support for the APDS9702 chip.
+	 This is used as a proximity sensor.
+
+config INPUT_BMA150
+	tristate "Bosch BMA150 accelerometer"
+	default n
+	help
+	  Say Y here if you want support for the BMA150 accelerometer
+	  SPI device.
+
+	  This driver supports both SPI and I2C, but if you need I2C,
+	  the recommended driver is BMA150_NG which will replace this
+	  driver eventually.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called bma150.
+
+config INPUT_BMA150_NG
+	tristate "Bosch BMA150 accelerometer (next gen)"
+	default n
+	depends on I2C && ! INPUT_BMA150
+	help
+	  Say Y here if you want support for the BMA150 accelerometer
+	  device.
+
+	  This driver should not be selected together with the regular
+	  BMA150 driver. It does NOT support SPI like the old one.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called bma150_ng.
+
+config INPUT_BMA150_NG_REG_ACCESS
+	bool "Enable debug fs access to registers"
+	default n
+	depends on INPUT_BMA150_NG && CONFIG_DEBUG_FS
+	help
+	  Enables access to registers from debug fs
+
+config INPUT_BMA150_RATE_MSEC
+	int "Default delay between samples, in msecs"
+	default 33
+	depends on INPUT_BMA150_NG
+	help
+	  Specifies the approximate delay between successive
+	  measurements from the accelerometer.  The value
+	  specified here is a default applied only when
+	  platform data does not provide a per-device setting.
+
+config INPUT_BMA250
+	tristate "Bosch BMA250 accelerometer"
+	default n
+	depends on I2C
+	help
+	  Say Y here if you want support for the BMA250 accelerometer
+	  device. This driver only supports I2C communication.
+
+config INPUT_BMA250_NG
+	tristate "Bosch BMA250 accelerometer (next gen)"
+	default n
+	depends on I2C
+	help
+	  Say Y here if you want support for the BMA250 accelerometer
+	  device. This driver only supports I2C communication.
+	  This device driver supprot to get accelerometer data from
+	  other parent device's register.
+
+config INPUT_GP2A
+        tristate "Sharp GP2AP002A00F I2C Proximity/Opto sensor driver"
+        depends on ARCH_MSM && I2C
+        default n
+        help
+          Say Y here if you want support for the Sharp GP2AP002A00F proximity
+          and ambient light sensor.
+
+config INPUT_SIMPLE_REMOTE
+	bool "Simple Remote detection driver"
+	default n
+	select SIMPLE_REMOTE_PLATFORM
+	help
+	  Provides support for detecting 3.5mm audio jack, such as wired
+	  headset. Requires the hardware specific driver
+	  config SIMPLE_REMOTE_PLATFORM
+
+config INPUT_AKM8975
+	tristate "AKM8975 Compass Driver"
+	default n
+	depends on I2C
+	help
+	 AKM8975 Compass Driver implemented by HTC.
+
+config INPUT_AKM8972
+	tristate "AKM8972 Compass Driver"
+	default n
+	depends on I2C
+	help
+	AKM8972 Compass Driver implemented by SEMC.
+
+config INPUT_BMP180
+	tristate "Bosch BMP180 pressure sensor"
+	default n
+	depends on I2C
+	help
+	  Say Y here if you want support for the BMP180 pressure
+	  device. This driver only supports I2C communication.
+
+config INPUT_ASETM2034A
+	tristate "Alps SETM2034A(Touch Motion) Driver"
+	default n
+	depends on I2C
+	help
+	  Say Y here if you want support for the ASETM2034A device.
+
+config BOSCH_BMA150
+        tristate "SMB380/BMA150 acceleration sensor support"
+        depends on I2C=y
+        help
+          If you say yes here you get support for Bosch Sensortec's
+          acceleration sensors SMB380/BMA150.
+
+config INPUT_LPS331AP
+	bool "LPS331AP pressure sensor driver"
+	depends on I2C
+	default n
+	help
+	  If you say yes here you get support LPS331AP pressure sensor.
 
 endif

@@ -17,6 +17,8 @@ source "drivers/gpu/vga/Kconfig"
 
 source "drivers/gpu/drm/Kconfig"
 
+source "drivers/gpu/msm/Kconfig"
+
 config VGASTATE
        tristate
        default n
@@ -2199,9 +2201,608 @@ config FB_PRE_INIT_FB
 config FB_MSM
 	tristate "MSM Framebuffer support"
 	depends on FB && ARCH_MSM
+	select FB_BACKLIGHT if FB_MSM_BACKLIGHT
+	select NEW_LEDS
+	select LEDS_CLASS
 	select FB_CFB_FILLRECT
 	select FB_CFB_COPYAREA
 	select FB_CFB_IMAGEBLIT
+	---help---
+	  Support for MSM Framebuffer.
+
+if FB_MSM
+
+config FB_MSM_BACKLIGHT
+	bool "Support for backlight control"
+	default y
+	---help---
+	  Say Y here if you want to control the backlight of your display.
+
+config FB_MSM_LOGO
+	bool "MSM Frame Buffer Logo"
+	---help---
+	  Show /logo.rle during boot.
+
+config FB_MSM_LCDC_HW
+	bool
+	default n
+
+config FB_MSM_TRIPLE_BUFFER
+	bool "Support for triple frame buffer"
+	default n
+
+choice
+	prompt "MDP HW version"
+	default FB_MSM_MDP22
+
+config FB_MSM_MDP22
+	bool "MDP HW ver2.2"
+	---help---
+	  Support for MSM MDP HW revision 2.2
+	  Say Y here if this is msm7201 variant platform.
+
+config FB_MSM_MDP30
+	select FB_MSM_LCDC_HW
+	bool "MDP HW ver3.0"
+	---help---
+	  Support for MSM MDP HW revision 3.0
+	  Say Y here if this is msm7x25 variant platform.
+
+config FB_MSM_MDP31
+	select FB_MSM_LCDC_HW
+	bool "MDP HW ver3.1"
+	---help---
+	  Support for MSM MDP HW revision 3.1
+	  Say Y here if this is msm8x50 variant platform.
+
+config FB_MSM_MDP40
+	select FB_MSM_LCDC_HW
+	bool "MDP HW ver4.0"
+	---help---
+	  Support for MSM MDP HW revision 4.0
+	  Say Y here if this is msm7x30 variant platform.
+endchoice
+
+config FB_MSM_EBI2
+	bool
+	default n
+
+config FB_MSM_MDDI
+	bool
+	default n
+
+config FB_MSM_MIPI_DSI
+	bool
+	default n
+
+config FB_MSM_LCDC
+	bool
+	default n
+
+config FB_MSM_OVERLAY
+	depends on FB_MSM_MDP40 && ANDROID_PMEM
+	bool "MDP4 overlay support"
+	default n
+
+config FB_MSM_DTV
+	depends on FB_MSM_OVERLAY
+	bool
+	default n
+
+config FB_MSM_PANEL_ESD
+	bool "PANEL ESD support"
+	default n
+
+config FB_MSM_MDDI_NOVATEK_DISABLE_MDDI
+	bool "Disable MDDI"
+	default n
+
+config FB_MSM_EXTMDDI
+	bool
+	default n
+
+config FB_MSM_TVOUT
+	bool
+	default n
+
+config FB_MSM_MDDI_TOSHIBA_COMMON
+	bool
+	select FB_MSM_MDDI
+	default n
+
+config FB_MSM_MDDI_TOSHIBA_COMMON_VGA
+	bool
+	select FB_MSM_MDDI_TOSHIBA_COMMON
+	default n
+
+config FB_MSM_MDDI_ORISE
+	bool
+	select FB_MSM_MDDI
+	default n
+
+config FB_MSM_MDDI_QUICKVX
+	bool
+	select FB_MSM_MDDI
+	default n
+
+config FB_MSM_MDDI_AUTO_DETECT
+	bool
+	select FB_MSM_MDDI
+	default n
+
+config FB_MSM_LCDC_AUTO_DETECT
+	bool
+	select FB_MSM_LCDC
+	default n
+
+config FB_MSM_LCDC_PANEL
+	bool
+	select FB_MSM_LCDC
+	default n
+
+config FB_MSM_MIPI_DSI_TOSHIBA
+	bool
+	select FB_MSM_MIPI_DSI
+	default n
+
+config FB_MSM_MIPI_DSI_NOVATEK
+	bool
+	select FB_MSM_MIPI_DSI
+	default n
+
+config FB_MSM_MIPI_DSI_RENESAS_R63306
+	bool
+	select FB_MSM_MIPI_DSI
+	default n
+
+config FB_MSM_MIPI_DSI_SAMSUNG_S6D6AA0
+	bool
+	select FB_MSM_MIPI_DSI
+	default n
+
+config FB_MSM_LCDC_ST15_WXGA
+    bool
+    select FB_MSM_LCDC_PANEL
+    default n
+
+config FB_MSM_LCDC_ST15_PANEL
+    depends on FB_MSM_LCDC_HW
+    bool "LCDC ST1.5 Panel"
+    select FB_MSM_LCDC_ST15_WXGA
+    ---help---
+      Support for ST1.5 WXGA (1366x768) panel
+
+config FB_MSM_LCDC_QRDC_WXGA
+    bool
+    select FB_MSM_LCDC_PANEL
+    default n
+
+config FB_MSM_LCDC_QRDC_PANEL
+    depends on FB_MSM_LCDC_HW
+    bool "LCDC QRDC Panel"
+    select FB_MSM_LCDC_QRDC_WXGA
+    select SENSORS_WPCE775X
+    ---help---
+      Support for QRDC WXGA (1366x768) panel.
+      This will select the on-board WXGA display
+      used on the Quanta QRDC smartbook
+      reference design.
+
+config FB_MSM_LCDC_PRISM_WVGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_LCDC_SAMSUNG_WSVGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_LCDC_CHIMEI_WXGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_LCDC_GORDON_VGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_LCDC_TOSHIBA_WVGA_PT
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_LCDC_SHARP_WVGA_PT
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_LCDC_AUO_WVGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_LCDC_SAMSUNG_OLED_PT
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_LCDC_WXGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+
+config FB_MSM_MIPI_TOSHIBA_VIDEO_WVGA_PT
+	bool
+	select FB_MSM_MIPI_DSI_TOSHIBA
+	default n
+
+config FB_MSM_MIPI_NOVATEK_VIDEO_QHD_PT
+	bool
+	select FB_MSM_MIPI_DSI_NOVATEK
+	default n
+
+config FB_MSM_MIPI_NOVATEK_CMD_QHD_PT
+	bool
+	select FB_MSM_MIPI_DSI_NOVATEK
+	default n
+
+config FB_MSM_OVERLAY_WRITEBACK
+	depends on FB_MSM_OVERLAY
+        bool "MDP overlay write back mode enable"
+	---help---
+	  Support for MDP4 OVERLAY write back mode
+
+config FB_MSM_MIPI_R63306_PANEL_TMD_MDV20
+	bool "TMD MDV20 Panel"
+	select FB_MSM_MIPI_DSI_RENESAS_R63306
+	default n
+
+config FB_MSM_MIPI_R63306_PANEL_TMD_MDV22
+	bool "TMD MDV22 Panel"
+	select FB_MSM_MIPI_DSI_RENESAS_R63306
+	default n
+
+config FB_MSM_MIPI_R63306_PANEL_TMD_MDW30
+	bool "TMD MDW30 Panel"
+	select FB_MSM_MIPI_DSI_RENESAS_R63306
+	default n
+
+config FB_MSM_MIPI_R63306_PANEL_SHARP_LS043K3SX01
+	bool "SHARP LS043K3SX01 Panel"
+	select FB_MSM_MIPI_DSI_RENESAS_R63306
+	default n
+
+config FB_MSM_MIPI_S6D6AA0_PANEL_SONY_ACX439AKM
+	bool "SONY ACX439AKM Panel"
+	select FB_MSM_MIPI_DSI_SAMSUNG_S6D6AA0
+	default n
+	select FB_MSM_MIPI_NOVATEK_3D_PANEL
+
+#
+# Extracted panels which will be connected to the MDDI Novatek MCU
+#
+config MDDI_NOVATEK_PANEL_TMD_MDP42
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "TMD MDP42 Panel"
+	default n
+	---help---
+	  Support for TMD MDP42 panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_SHARP_LS040T8LX01
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SHARP LS040T8LX01 Panel"
+	default n
+	---help---
+	  Support for SHARP LS040T8LX01 panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_SHARP_LS042T3LX
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SHARP LS042T3LX Panel"
+	default n
+	---help---
+	  Support for SHARP_LS042T3LX panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_SONY_ACX424AKM
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SONY ACX424AKM Panel"
+	default n
+	---help---
+	  Support for SONY_ACX424AKM panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_SONY_ACX427AK
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SONY ACX427AK Panel"
+	default n
+	---help---
+	  Support for SONY_ACX427AK panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_SONY_ACX424AK
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SONY ACX424AK Panel"
+	default n
+	---help---
+	  Support for SONY_ACX424AK panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_HITACHI_DX09D09VM
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "HITACHI DX09D09VM Panel"
+	default n
+	---help---
+	  Support for HITACHI_DX09D09VM panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_SHARP_LS033T3LX01
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SHARP LS033T3LX01 Panel"
+	default n
+	---help---
+	  Support for SHARP_LS033T3LX01 panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_TMD_LT033MDV1000
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "TMD LT033MDV1000 Panel"
+	default n
+	---help---
+	  Support for TMD_LT033MDV1000 panel connected
+	  to the MDDI Novatek micro controller
+choice
+	prompt "Secondary LCD Panel"
+	depends on  FB_MSM_MDP31
+	default FB_MSM_SECONDARY_PANEL_NONE
+
+config FB_MSM_LCDC_EXTERNAL_WXGA
+	depends on FB_MSM_MDP31
+	bool "External WXGA on LCDC"
+	select FB_MSM_LCDC_PANEL
+	---help---
+	  Support for external WXGA display (1280x720)
+
+config FB_MSM_HDMI_SII_EXTERNAL_720P
+	depends on FB_MSM_MDP31
+	bool "External SiI9022 HDMI 720P"
+	select FB_MSM_LCDC_PANEL
+	---help---
+	  Support for external HDMI 720p display (1280x720p)
+	  Using SiI9022 chipset
+
+config FB_MSM_SECONDARY_PANEL_NONE
+	bool "NONE"
+	---help---
+	  No secondary panel
+endchoice
+
+config FB_MSM_LCDC_DSUB
+	depends on FB_MSM_LCDC_SAMSUNG_WSVGA && FB_MSM_MDP40 && FB_MSM_LCDC_HW
+	bool "External DSUB support"
+	default n
+	---help---
+	  Support for external DSUB (VGA) display up to 1440x900.  The DSUB
+	  display shares the same video bus as the primary LCDC attached display.
+	  Typically only one of the two displays can be used at one time.
+
+config FB_MSM_EXT_INTERFACE_COMMON
+	bool
+	default n
+
+config FB_MDDI_DISABLE_REVERSE
+	bool "DISABLE REVERSE"
+	default n
+
+config FB_MSM_HDMI_COMMON
+	bool
+	default n
+
+config FB_MSM_HDMI_3D
+	bool
+	default n
+
+config FB_MSM_HDMI_ADV7520_PANEL
+	depends on FB_MSM_MDP40 && FB_MSM_OVERLAY
+        bool "LCDC HDMI ADV7520 720p Panel"
+        select FB_MSM_DTV
+        select FB_MSM_EXT_INTERFACE_COMMON
+	select FB_MSM_HDMI_COMMON
+	default n
+        ---help---
+        Support for LCDC 720p HDMI panel attached to ADV7520
+
+config FB_MSM_HDMI_ADV7520_PANEL_HDCP_SUPPORT
+        depends on FB_MSM_HDMI_ADV7520_PANEL
+        bool "Use HDCP mode"
+        default y
+        ---help---
+          Support for HDCP mode for ADV7520 HDMI 720p Panel
+          Choose to enable HDCP
+
+
+config FB_MSM_HDMI_MSM_PANEL
+	depends on FB_MSM_MDP40
+	bool "MSM HDMI 1080p Panel"
+	select FB_MSM_DTV
+        select FB_MSM_EXT_INTERFACE_COMMON
+	select FB_MSM_HDMI_COMMON
+	select FB_MSM_HDMI_3D
+	default n
+	---help---
+	  Support for 480p/720p/1080i/1080p output through MSM HDMI
+
+config FB_MSM_HDMI_MSM_FUJI_PANEL
+	depends on FB_MSM_MDP40 && !FB_MSM_HDMI_MSM_PANEL
+	bool "MSM HDMI 1080p Panel for Fuji"
+	select FB_MSM_DTV
+	select FB_MSM_EXT_INTERFACE_COMMON
+	select FB_MSM_HDMI_COMMON
+	select FB_MSM_HDMI_3D
+	default n
+	---help---
+	  Support for 480p/720p/1080p output through MSM HDMI for Fuji
+
+config FB_MSM_HDMI_MSM_PANEL_DVI_SUPPORT
+	depends on FB_MSM_HDMI_MSM_PANEL || FB_MSM_HDMI_MSM_FUJI_PANEL
+	bool "Use DVI mode"
+	default n
+	---help---
+	  Support for DVI mode for MSM HDMI 1080p Panel
+
+config FB_MSM_HDMI_MSM_PANEL_CEC_SUPPORT
+	depends on FB_MSM_HDMI_MSM_PANEL
+	bool "Enable CEC"
+	default n
+	---help---
+	  Support for HDMI CEC Feature
+	  Choose to enable CEC
+
+config FB_MSM_HDMI_MSM_PANEL_HDCP_SUPPORT
+	depends on FB_MSM_HDMI_MSM_PANEL || FB_MSM_HDMI_MSM_FUJI_PANEL
+	bool "Use HDCP mode"
+	default y
+	---help---
+	  Support for HDCP mode for MSM HDMI 1080p Panel
+	  Choose to enable HDCP
+	  .
+	  .
+
+config FB_MSM_HDMI_MSM_PANEL_CEC_SUPPORT
+	depends on FB_MSM_HDMI_MSM_FUJI_PANEL
+	bool "Use CEC mode"
+	default y
+	---help---
+	  Support for CEC for MSM HDMI 1080p Panel for Fuji
+	  Choose to enable CEC
+
+config FB_MSM_TVOUT_NTSC
+	bool
+	select FB_MSM_TVOUT
+	default n
+
+config FB_MSM_TVOUT_PAL
+	bool
+	select FB_MSM_TVOUT
+	default n
+
+config FB_MSM_HDMI_SII9024A_PANEL
+	depends on FB_MSM_MDP40
+	bool "LCDC HDMI SiI9024A 720p Panel"
+	select FB_MSM_DTV
+	select UIO
+	select UIO_PDRV_GENIRQ
+	default n
+	---help---
+	  Support for LCDC 720p HDMI panel attached to SiI9024A
+
+choice
+	depends on  (FB_MSM_MDP22 || FB_MSM_MDP31 || FB_MSM_MDP40)
+	prompt "TVOut Region"
+	default FB_MSM_TVOUT_NONE
+
+config FB_MSM_TVOUT_NTSC_M
+	bool "NTSC M"
+	select FB_MSM_TVOUT
+        select FB_MSM_EXT_INTERFACE_COMMON
+	---help---
+	  Support for NTSC M region (North American and Korea)
+          .
+          .
+          .
+
+config FB_MSM_TVOUT_NTSC_J
+	bool "NTSC J"
+	select FB_MSM_TVOUT
+        select FB_MSM_EXT_INTERFACE_COMMON
+	---help---
+	  Support for NTSC J region (Japan)
+          .
+          .
+          .
+
+config FB_MSM_TVOUT_PAL_BDGHIN
+	bool "PAL BDGHIN"
+	select FB_MSM_TVOUT
+        select FB_MSM_EXT_INTERFACE_COMMON
+	---help---
+	  Support for PAL BDGHIN region (Non-argentina PAL-N)
+          .
+          .
+          .
+
+config FB_MSM_TVOUT_PAL_M
+	bool "PAL M"
+	select FB_MSM_TVOUT
+        select FB_MSM_EXT_INTERFACE_COMMON
+	---help---
+	  Support for PAL M region
+          .
+          .
+          .
+
+config FB_MSM_TVOUT_PAL_N
+	bool "PAL N"
+	select FB_MSM_TVOUT
+        select FB_MSM_EXT_INTERFACE_COMMON
+	---help---
+	  Support for PAL N region (Argentina PAL-N)
+          .
+          .
+          .
+
+config FB_MSM_TVOUT_NONE
+	bool "NONE"
+	---help---
+	  This will disable TV Out functionality.
+endchoice
+
+config FB_MSM_TVOUT_SVIDEO
+	bool "TVOut on S-video"
+	depends on FB_MSM_TVOUT
+	default n
+	---help---
+	  Selects whether the TVOut signal uses S-video.
+	  Choose n for composite output.
+
+choice
+	depends on  FB_MSM_MDP22
+	prompt "External MDDI"
+	default FB_MSM_EXTMDDI_SVGA
+
+config FB_MSM_EXTMDDI_SVGA
+	bool "External MDDI SVGA"
+	select FB_MSM_MDDI
+	select FB_MSM_EXTMDDI
+	---help---
+	  Support for MSM SVGA (800x600) external MDDI panel
+
+config FB_MSM_EXTMDDI_NONE
+	bool "NONE"
+	---help---
+	  This will disable External MDDI functionality.
+endchoice
+
+choice
+	prompt "Default framebuffer color depth"
+	depends on FB_MSM_MDP40 || FB_MSM_MDP31
+	default FB_MSM_DEFAULT_DEPTH_RGBA8888
+
+config FB_MSM_DEFAULT_DEPTH_RGB565
+	bool "16 bits per pixel (RGB565)"
+
+config FB_MSM_DEFAULT_DEPTH_ARGB8888
+	bool "32 bits per pixel (ARGB8888)"
+
+config FB_MSM_DEFAULT_DEPTH_RGBA8888
+	bool "32 bits per pixel (RGBA8888)"
+
+endchoice
+
+endif
 
 config FB_MX3
 	tristate "MX3 Framebuffer support"
@@ -2228,6 +2829,8 @@ config FB_BROADSHEET
 	  controller. The release name for this device was Epson S1D13521
 	  and could also have been called by other names when coupled with
 	  a bridge adapter.
+
+source "drivers/video/msm/Kconfig"
 
 source "drivers/video/omap/Kconfig"
 source "drivers/video/omap2/Kconfig"

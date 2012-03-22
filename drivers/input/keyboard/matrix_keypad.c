@@ -78,7 +78,11 @@ static void activate_all_cols(const struct matrix_keypad_platform_data *pdata,
 static bool row_asserted(const struct matrix_keypad_platform_data *pdata,
 			 int row)
 {
-	return gpio_get_value_cansleep(pdata->row_gpios[row]) ?
+	if (pdata->qt_check)
+		return gpio_get_value_cansleep(pdata->row_gpios[row]) ?
+			pdata->active_low : !pdata->active_low;
+	else
+		return gpio_get_value_cansleep(pdata->row_gpios[row]) ?
 			!pdata->active_low : pdata->active_low;
 }
 
@@ -297,12 +301,12 @@ static int __devinit init_matrix_gpio(struct platform_device *pdev,
 	}
 
 	for (i = 0; i < pdata->num_row_gpios; i++) {
-		err = request_irq(gpio_to_irq(pdata->row_gpios[i]),
+		err = request_any_context_irq(gpio_to_irq(pdata->row_gpios[i]),
 				matrix_keypad_interrupt,
 				IRQF_DISABLED |
 				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 				"matrix-keypad", keypad);
-		if (err) {
+		if (err < 0) {
 			dev_err(&pdev->dev,
 				"Unable to acquire interrupt for GPIO line %i\n",
 				pdata->row_gpios[i]);

@@ -572,6 +572,9 @@ config CPU_TLB_V6
 config CPU_TLB_V7
 	bool
 
+config EMULATE_DOMAIN_MANAGER_V7
+	bool
+
 config VERIFY_PERMISSION_FAULT
 	bool
 endif
@@ -782,12 +785,21 @@ config CACHE_L2X0
 	bool "Enable the L2x0 outer cache controller"
 	depends on REALVIEW_EB_ARM11MP || MACH_REALVIEW_PB11MP || MACH_REALVIEW_PB1176 || \
 		   REALVIEW_EB_A9MP || ARCH_MX35 || ARCH_MX31 || MACH_REALVIEW_PBX || \
-		   ARCH_NOMADIK || ARCH_OMAP4 || ARCH_U8500 || ARCH_VEXPRESS_CA9X4
+		   ARCH_NOMADIK || ARCH_OMAP4 || ARCH_U8500 || ARCH_VEXPRESS_CA9X4 || \
+		   ARCH_MSM7X27
 	default y
 	select OUTER_CACHE
 	select OUTER_CACHE_SYNC
 	help
 	  This option enables the L2x0 PrimeCell.
+
+config CACHE_PL310
+	bool
+	depends on CACHE_L2X0
+	default y if CPU_V7 && !CPU_V6
+	help
+	  This option enables optimisations for the PL310 cache
+	  controller.
 
 config CACHE_TAUROS2
 	bool "Enable the Tauros2 L2 cache controller"
@@ -837,3 +849,30 @@ config ARCH_HAS_BARRIERS
 	help
 	  This option allows the use of custom mandatory barriers
 	  included via the mach/barriers.h file.
+
+config VCM_MM
+	bool
+
+config VCM
+	bool "Virtual Contiguous Memory (VCM) Layer"
+	depends on MMU
+	select GENERIC_ALLOCATOR
+	select VCM_MM
+	default n
+	help
+	  Virtual Contiguous Memory layer. This is the layer that is intended to
+	  replace PMEM.
+
+	  If you don't know what this is, say N here.
+
+config STRICT_MEMORY_RWX
+	bool "restrict kernel memory permissions as much as possible"
+	default n
+	help
+	  If this is set, kernel text will be made RX, kernel data and stack
+	  RW, rodata R (otherwise all of the kernel 1-to-1 mapping is
+	  made RWX).
+	  The tradeoff is that several sections are padded to
+	  1M boundaries (because their permissions are different and
+	  splitting the 1M pages into 4K ones causes TLB performance
+	  problems), wasting memory.
